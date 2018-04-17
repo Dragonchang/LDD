@@ -1,0 +1,1 @@
+cmd_/work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/scull.o := ld -m elf_x86_64   -r -o /work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/scull.o /work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/main.o /work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/pipe.o /work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/access.o 

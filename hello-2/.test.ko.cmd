@@ -1,0 +1,1 @@
+cmd_/work/Learn_DOC/all-doc/linux/LKD/hello-2/test.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /work/Learn_DOC/all-doc/linux/LKD/hello-2/test.ko /work/Learn_DOC/all-doc/linux/LKD/hello-2/test.o /work/Learn_DOC/all-doc/linux/LKD/hello-2/test.mod.o

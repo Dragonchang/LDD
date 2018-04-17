@@ -1,0 +1,1 @@
+cmd_/work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/scull.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/scull.ko /work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/scull.o /work/Learn_DOC/all-doc/linux/LDD/LDD-test/examples/scull/scull.mod.o
