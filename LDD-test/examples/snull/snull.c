@@ -15,7 +15,10 @@
  * $Id: snull.c,v 1.21 2004/11/05 02:36:03 rubini Exp $
  */
 
+#include <linux/version.h>
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18))
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/moduleparam.h>
@@ -622,7 +625,16 @@ int snull_change_mtu(struct net_device *dev, int new_mtu)
 	spin_unlock_irqrestore(lock, flags);
 	return 0; /* success */
 }
-
+static const struct net_device_ops snull_netdev_ops = {
+	.ndo_open		= snull_open,
+	.ndo_stop		= snull_release,
+	.ndo_start_xmit		= snull_tx,
+	.ndo_tx_timeout		= snull_tx_timeout,
+	.ndo_do_ioctl		= snull_ioctl,
+	.ndo_change_mtu		= snull_change_mtu,
+	.ndo_set_config     = snull_config,
+	.ndo_get_stats       = snull_stats,
+};
 /*
  * The init function (sometimes called probe).
  * It is invoked by register_netdev()
@@ -644,20 +656,11 @@ void snull_init(struct net_device *dev)
 	 */
 	ether_setup(dev); /* assign some of the fields */
 
-	dev->open            = snull_open;
-	dev->stop            = snull_release;
-	dev->set_config      = snull_config;
-	dev->hard_start_xmit = snull_tx;
-	dev->do_ioctl        = snull_ioctl;
-	dev->get_stats       = snull_stats;
-	dev->change_mtu      = snull_change_mtu;  
-	dev->rebuild_header  = snull_rebuild_header;
-	dev->hard_header     = snull_header;
-	dev->tx_timeout      = snull_tx_timeout;
-	dev->watchdog_timeo = timeout;
+        dev->netdev_ops	= &snull_netdev_ops;
+	//dev->watchdog_timeo = timeout;
 	if (use_napi) {
-		dev->poll        = snull_poll;
-		dev->weight      = 2;
+		//dev->poll        = snull_poll;
+		//dev->weight      = 2;
 	}
 	/* keep the default flags, just add NOARP */
 	dev->flags           |= IFF_NOARP;

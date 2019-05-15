@@ -1,0 +1,1 @@
+cmd_/work/Learn_DOC/github/LDD/LDD-test/examples/short/short.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /work/Learn_DOC/github/LDD/LDD-test/examples/short/short.ko /work/Learn_DOC/github/LDD/LDD-test/examples/short/short.o /work/Learn_DOC/github/LDD/LDD-test/examples/short/short.mod.o

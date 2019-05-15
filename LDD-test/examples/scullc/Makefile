@@ -9,7 +9,8 @@ else
   DEBFLAGS = -O2
 endif
 
-CFLAGS += $(DEBFLAGS) -I$(LDDINC)
+EXTRA_CFLAGS += $(DEBFLAGS)
+EXTRA_CFLAGS += -I$(LDDINC)
 
 TARGET = scullc
 

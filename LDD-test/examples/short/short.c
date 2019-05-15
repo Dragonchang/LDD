@@ -21,7 +21,10 @@
  * writers.
  */
 
+#include <linux/version.h>
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18))
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
@@ -113,6 +116,7 @@ static inline void short_incr_bp(volatile unsigned long *index, int delta)
 
 int short_open (struct inode *inode, struct file *filp)
 {
+printk("short_open\n");
 	extern struct file_operations short_i_fops;
 
 	if (iminor (inode) & 0x80)
@@ -134,6 +138,7 @@ enum short_modes {SHORT_DEFAULT=0, SHORT_PAUSE, SHORT_STRING, SHORT_MEMORY};
 ssize_t do_short_read (struct inode *inode, struct file *filp, char __user *buf,
 		size_t count, loff_t *f_pos)
 {
+printk("do_short_read\n");
 	int retval = count, minor = iminor (inode);
 	unsigned long port = short_base + (minor&0x0f);
 	void *address = (void *) short_base + (minor&0x0f);
@@ -189,6 +194,7 @@ ssize_t do_short_read (struct inode *inode, struct file *filp, char __user *buf,
  */
 ssize_t short_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
+printk("short_read\n");
 	return do_short_read(filp->f_dentry->d_inode, filp, buf, count, f_pos);
 }
 
@@ -197,6 +203,7 @@ ssize_t short_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 ssize_t do_short_write (struct inode *inode, struct file *filp, const char __user *buf,
 		size_t count, loff_t *f_pos)
 {
+printk("do_short_write\n");
 	int retval = count, minor = iminor(inode);
 	unsigned long port = short_base + (minor&0x0f);
 	void *address = (void *) short_base + (minor&0x0f);
@@ -251,6 +258,7 @@ ssize_t do_short_write (struct inode *inode, struct file *filp, const char __use
 ssize_t short_write(struct file *filp, const char __user *buf, size_t count,
 		loff_t *f_pos)
 {
+printk("short_write\n");
 	return do_short_write(filp->f_dentry->d_inode, filp, buf, count, f_pos);
 }
 
@@ -280,6 +288,7 @@ struct file_operations short_fops = {
 
 ssize_t short_i_read (struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
+printk("short_i_read\n");
 	int count0;
 	DEFINE_WAIT(wait);
 
@@ -306,6 +315,7 @@ ssize_t short_i_read (struct file *filp, char __user *buf, size_t count, loff_t 
 ssize_t short_i_write (struct file *filp, const char __user *buf, size_t count,
 		loff_t *f_pos)
 {
+printk("short_i_write\n");
 	int written = 0, odd = *f_pos & 1;
 	unsigned long port = short_base; /* output to the parallel data latch */
 	void *address = (void *) short_base;
@@ -335,6 +345,7 @@ struct file_operations short_i_fops = {
 
 irqreturn_t short_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 {
+printk("short_interrupt\n");
 	struct timeval tv;
 	int written;
 
@@ -381,6 +392,7 @@ static inline void short_incr_tv(volatile struct timeval **tvp)
 
 void short_do_tasklet (unsigned long unused)
 {
+printk("short_do_tasklet\n");
 	int savecount = short_wq_count, written;
 	short_wq_count = 0; /* we have already been removed from the queue */
 	/*
@@ -511,7 +523,7 @@ void short_selfprobe(void)
       */
 	for (i = 0; trials[i]; i++)
 		tried[i] = request_irq(trials[i], short_probing,
-				SA_INTERRUPT, "short probe", NULL);
+				IRQF_DISABLED, "short probe", NULL);
 
 	do {
 		short_irq = 0; /* none got, yet */
@@ -548,7 +560,7 @@ void short_selfprobe(void)
 int short_init(void)
 {
 	int result;
-
+        printk("short_init\n");
 	/*
 	 * first, sort out the base/short_base ambiguity: we'd better
 	 * use short_base in the code, for clarity, but allow setting
@@ -594,19 +606,19 @@ int short_init(void)
 	 * (unused) argument.
 	 */
 	/* this line is in short_init() */
-	INIT_WORK(&short_wq, (void (*)(void *)) short_do_tasklet, NULL);
+	INIT_WORK(&short_wq, (void (*)(void *)) short_do_tasklet);
 
 	/*
 	 * Now we deal with the interrupt: either kernel-based
 	 * autodetection, DIY detection or default number
 	 */
-
+printk("short_init11 %d\n",short_irq);
 	if (short_irq < 0 && probe == 1)
 		short_kernelprobe();
-
+printk("short_init22 %d\n",short_irq);
 	if (short_irq < 0 && probe == 2)
 		short_selfprobe();
-
+printk("short_init33 %d\n",short_irq);
 	if (short_irq < 0) /* not yet specified: force the default on */
 		switch(short_base) {
 		    case 0x378: short_irq = 7; break;
@@ -619,9 +631,10 @@ int short_init(void)
 	 * instead of the normal one. Do it first, before a -EBUSY will
 	 * force short_irq to -1.
 	 */
+printk("short_init44 short_irq: %d share:%d\n",short_irq, share);
 	if (short_irq >= 0 && share > 0) {
 		result = request_irq(short_irq, short_sh_interrupt,
-				SA_SHIRQ | SA_INTERRUPT,"short",
+				IRQF_DISABLED,"short",
 				short_sh_interrupt);
 		if (result) {
 			printk(KERN_INFO "short: can't get assigned irq %i\n", short_irq);
@@ -632,10 +645,11 @@ int short_init(void)
 		}
 		return 0; /* the rest of the function only installs handlers */
 	}
-
+printk("short_init55 %d\n",short_irq);
 	if (short_irq >= 0) {
 		result = request_irq(short_irq, short_interrupt,
-				SA_INTERRUPT, "short", NULL);
+				IRQF_DISABLED, "short", NULL);
+printk("short_init55aa %d\n",result);
 		if (result) {
 			printk(KERN_INFO "short: can't get assigned irq %i\n",
 					short_irq);
@@ -655,7 +669,7 @@ int short_init(void)
 		result = request_irq(short_irq,
 				tasklet ? short_tl_interrupt :
 				short_wq_interrupt,
-				SA_INTERRUPT,"short-bh", NULL);
+				IRQF_DISABLED,"short-bh", NULL);
 		if (result) {
 			printk(KERN_INFO "short-bh: can't get assigned irq %i\n",
 					short_irq);
